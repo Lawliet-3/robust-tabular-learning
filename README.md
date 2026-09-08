@@ -4,6 +4,12 @@ A reproducible research benchmark comparing **XGBoost, LightGBM, CatBoost,
 FT-Transformer, and TabPFN** under conditions that resemble real tabular ML
 deployments—not only clean random train/test splits.
 
+[![CI](https://github.com/Lawliet-3/robust-tabular-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/Lawliet-3/robust-tabular-learning/actions/workflows/ci.yml)
+
+**Current status:** the complete pipeline and reporting workflow are validated.
+The 180-fit core comparative study is configured and ready for GPU execution;
+its results will be reported only after the full run completes.
+
 1. Which model family performs best on clean classification and regression tasks?
 2. How quickly does each model degrade as training data becomes scarce?
 3. Which models are most robust to missing values introduced at inference time?
@@ -13,17 +19,18 @@ deployments—not only clean random train/test splits.
 
 ## Experiment design
 
-| Axis | Values |
-|---|---|
-| Models | XGBoost, LightGBM, CatBoost, FT-Transformer, TabPFN |
-| Data | Seven pinned OpenML datasets; classification and regression |
-| Clean baseline | Stratified random split for classification |
-| Low data | 10%, 25%, and 50% of the original training partition |
-| Missing data | 10%, 30%, and 50% MCAR masking at inference time |
-| Shift | Target-independent test split from the upper tail of a random feature projection |
-| Quality | Accuracy, macro-F1, ROC-AUC, RMSE, MAE, R² |
-| Efficiency | Fit time, prediction time, latency per 1,000 rows, model size |
-| Reliability | Three seeded repetitions; raw and aggregated outputs |
+| Axis | Core study | Extended study |
+|---|---|---|
+| Models | XGBoost, LightGBM, CatBoost, FT-Transformer, TabPFN | Same five models |
+| Data | 3 pinned OpenML datasets | 7 pinned OpenML datasets |
+| Tasks | Classification and regression | Classification and regression |
+| Clean baseline | Stratified random split for classification | Same |
+| Low data | 25% of the training partition | 10%, 25%, and 50% |
+| Missing data | 30% MCAR masking at inference | 10%, 30%, and 50% |
+| Shift | Feature-only projection split | Same |
+| Quality | Accuracy, macro-F1, ROC-AUC, RMSE, MAE, R² | Same |
+| Efficiency | Fit time, prediction time, latency, model size | Same |
+| Reliability | 3 seeds; 180 fits | 3 seeds; 840 fits |
 
 The shift split deliberately uses features only—not the target—to avoid leaking
 outcomes into the scenario definition. Every dataset is pinned by OpenML data ID.
@@ -47,7 +54,7 @@ These are single-seed pipeline-validation results, not final comparative
 evidence. In particular, a negative degradation means that macro-F1 happened to
 increase relative to the clean split in this run. Timing varies by hardware.
 
-### Reproduce these results
+### Reproduce the validation result
 
 ```bash
 git clone https://github.com/Lawliet-3/robust-tabular-learning.git
@@ -58,14 +65,16 @@ pip install -e '.[dev]'
 robust-tabular configs/smoke.yaml
 ```
 
-The command creates:
+The command creates the following artifacts beneath `results/smoke/`:
 
-- `results/smoke/raw_results.csv`: every individual scenario run
-- `results/smoke/summary.csv`: aggregated metrics
-- `results/smoke/run_config.json`: the resolved configuration and seed
-- `results/smoke/environment.json`: software, platform, hardware, and commit metadata
-- `results/smoke/REPORT.md`: generated mean and degradation tables
-- `results/smoke/figures/`: clean performance, robustness, and cost plots
+| Artifact | Purpose |
+|---|---|
+| `raw_results.csv` | One row per dataset, model, condition, severity, and seed |
+| `summary.csv` | Mean and standard deviation for each completed group |
+| `run_config.json` | Fully resolved experiment configuration |
+| `environment.json` | Package versions, platform, hardware, and Git commit |
+| `REPORT.md` | Generated performance, degradation, and failure tables |
+| `figures/` | Clean performance, robustness, and quality-versus-cost plots |
 
 ## Core comparative benchmark
 
@@ -81,6 +90,10 @@ representative level for each stressor. This produces 180 fits:
 Run it in a GPU environment:
 
 ```bash
+git clone https://github.com/Lawliet-3/robust-tabular-learning.git
+cd robust-tabular-learning
+python -m venv .venv
+source .venv/bin/activate
 pip install -e '.[all,dev]'
 robust-tabular configs/core_benchmark.yaml
 ```
@@ -91,6 +104,14 @@ Use `--restart` only when you intentionally want to discard the checkpoint and
 rerun the entire matrix. Reports, figures, configuration, and environment
 metadata are regenerated automatically.
 
+```bash
+# Resume an interrupted run
+robust-tabular configs/core_benchmark.yaml
+
+# Intentionally discard the checkpoint and start again
+robust-tabular configs/core_benchmark.yaml --restart
+```
+
 Python 3.10–3.13 is supported. TabPFN may download pretrained weights on its
 first run. For the larger seven-dataset, multi-severity extension, use:
 
@@ -100,8 +121,8 @@ robust-tabular configs/benchmark.yaml
 
 ## Configuration
 
-Edit [`configs/core_benchmark.yaml`](configs/core_benchmark.yaml) to change datasets,
-repetitions, corruption levels, or model hyperparameters. Missing optional
+Edit [`configs/core_benchmark.yaml`](configs/core_benchmark.yaml) to change
+datasets, repetitions, corruption levels, or model hyperparameters. Missing optional
 dependencies are recorded as `skipped`; an error in one model/dataset pair is
 recorded as `failed` while the rest of the matrix continues.
 
@@ -122,9 +143,9 @@ small synthetic mixed-type dataset and do not download OpenML data.
 ## Repository layout
 
 ```text
-configs/                  Benchmark and smoke-test configurations
+configs/                  Smoke, core, and extended benchmark configurations
 src/robust_tabular/       Data, perturbations, models, runner, metrics, report
-tests/                    Offline unit and integration tests
+tests/                    Offline unit, resume, report, and integration tests
 .github/workflows/ci.yml  Continuous integration
 ```
 
