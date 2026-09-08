@@ -30,6 +30,8 @@ class BenchmarkConfig:
     repeats: int = 3
     output_dir: str = "results"
     model_params: dict[str, dict[str, Any]] = field(default_factory=dict)
+    resume: bool = True
+    generate_report: bool = True
 
 
 def load_config(path: str | Path) -> BenchmarkConfig:
@@ -59,4 +61,3 @@ def _validate(config: BenchmarkConfig) -> None:
     for value in [*config.low_data_fractions, *config.missingness_rates]:
         if not 0 < value < 1:
             raise ValueError("Scenario fractions and rates must be between 0 and 1")
-

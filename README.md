@@ -28,7 +28,7 @@ deployments—not only clean random train/test splits.
 The shift split deliberately uses features only—not the target—to avoid leaking
 outcomes into the scenario definition. Every dataset is pinned by OpenML data ID.
 
-## Verified baseline results
+## Pipeline validation
 
 The table below is the output of the lightweight smoke benchmark using
 `HistGradientBoostingClassifier` on the pinned OpenML diabetes dataset (data ID
@@ -45,8 +45,7 @@ study.
 
 These are single-seed pipeline-validation results, not final comparative
 evidence. In particular, a negative degradation means that macro-F1 happened to
-increase relative to the clean split in this run. The full benchmark uses three
-seeds, seven datasets, and all five model families. Timing varies by hardware.
+increase relative to the clean split in this run. Timing varies by hardware.
 
 ### Reproduce these results
 
@@ -64,30 +63,44 @@ The command creates:
 - `results/smoke/raw_results.csv`: every individual scenario run
 - `results/smoke/summary.csv`: aggregated metrics
 - `results/smoke/run_config.json`: the resolved configuration and seed
+- `results/smoke/environment.json`: software, platform, hardware, and commit metadata
+- `results/smoke/REPORT.md`: generated mean and degradation tables
+- `results/smoke/figures/`: clean performance, robustness, and cost plots
 
-To reproduce the complete research matrix instead, install the optional models
-and use the full configuration:
+## Core comparative benchmark
+
+The recommended main study is defined in
+[`configs/core_benchmark.yaml`](configs/core_benchmark.yaml). It compares all
+five models on `credit-g`, `spambase`, and `kin8nm`, using three seeds and one
+representative level for each stressor. This produces 180 fits:
+
+```text
+3 datasets × 5 models × 4 conditions × 3 seeds = 180 fits
+```
+
+Run it in a GPU environment:
 
 ```bash
 pip install -e '.[all,dev]'
-robust-tabular configs/benchmark.yaml
+robust-tabular configs/core_benchmark.yaml
 ```
 
-Python 3.10–3.13 is supported. A GPU is useful for TabPFN and FT-Transformer but
-is not required for the smoke benchmark. TabPFN may download pretrained weights
-on its first run, so reserve the full configuration for a longer session.
+Every completed fit is saved atomically to `results/core/raw_results.csv`. If
+the process stops, run the same command again and it resumes from the checkpoint.
+Use `--restart` only when you intentionally want to discard the checkpoint and
+rerun the entire matrix. Reports, figures, configuration, and environment
+metadata are regenerated automatically.
 
-Generate a short Markdown report after a completed run:
+Python 3.10–3.13 is supported. TabPFN may download pretrained weights on its
+first run. For the larger seven-dataset, multi-severity extension, use:
 
-```python
-from robust_tabular.report import create_markdown_report
-
-create_markdown_report("results/full/raw_results.csv", "results/full/report.md")
+```bash
+robust-tabular configs/benchmark.yaml
 ```
 
 ## Configuration
 
-Edit [`configs/benchmark.yaml`](configs/benchmark.yaml) to change datasets,
+Edit [`configs/core_benchmark.yaml`](configs/core_benchmark.yaml) to change datasets,
 repetitions, corruption levels, or model hyperparameters. Missing optional
 dependencies are recorded as `skipped`; an error in one model/dataset pair is
 recorded as `failed` while the rest of the matrix continues.
