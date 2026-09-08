@@ -161,7 +161,7 @@ class _FTTransformerBase(BaseEstimator):
 
     def _fit_torch(
         self, X: np.ndarray, y: np.ndarray, classification: bool
-    ) -> "_FTTransformerBase":
+    ) -> _FTTransformerBase:
         try:
             import torch
             from torch import nn
@@ -255,7 +255,7 @@ class _FTTransformerBase(BaseEstimator):
 
 
 class FTTransformerClassifier(_FTTransformerBase, ClassifierMixin):
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "FTTransformerClassifier":
+    def fit(self, X: np.ndarray, y: np.ndarray) -> FTTransformerClassifier:
         return self._fit_torch(X, y, classification=True)  # type: ignore[return-value]
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
@@ -269,7 +269,7 @@ class FTTransformerClassifier(_FTTransformerBase, ClassifierMixin):
 
 
 class FTTransformerRegressor(_FTTransformerBase, RegressorMixin):
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "FTTransformerRegressor":
+    def fit(self, X: np.ndarray, y: np.ndarray) -> FTTransformerRegressor:
         return self._fit_torch(X, y, classification=False)  # type: ignore[return-value]
 
     def predict(self, X: np.ndarray) -> np.ndarray:
