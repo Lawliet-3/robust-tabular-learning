@@ -29,7 +29,6 @@ from .metrics import evaluate
 from .models import ModelUnavailableError, build_model
 from .report import create_markdown_report, create_plots
 
-
 RUN_KEY = [
     "dataset",
     "openml_id",
