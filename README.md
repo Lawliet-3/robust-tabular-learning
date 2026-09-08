@@ -4,13 +4,6 @@ A reproducible research benchmark comparing **XGBoost, LightGBM, CatBoost,
 FT-Transformer, and TabPFN** under conditions that resemble real tabular ML
 deployments—not only clean random train/test splits.
 
-This project supports the research direction in my KMUTT Computer Engineering
-master's application: understanding when pretrained and neural tabular models
-improve on strong tree ensembles, and how those choices change under limited
-data, missing values, and distribution shift.
-
-## Research questions
-
 1. Which model family performs best on clean classification and regression tasks?
 2. How quickly does each model degrade as training data becomes scarce?
 3. Which models are most robust to missing values introduced at inference time?
