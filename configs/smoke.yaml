@@ -1,0 +1,11 @@
+seed: 42
+test_size: 0.2
+repeats: 1
+output_dir: results/smoke
+models: [hist_gradient_boosting]
+scenarios: [standard, low_data, missingness, covariate_shift]
+low_data_fractions: [0.25]
+missingness_rates: [0.3]
+datasets:
+  - {name: diabetes, openml_id: 37, task: classification}
+

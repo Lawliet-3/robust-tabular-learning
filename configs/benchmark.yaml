@@ -1,0 +1,39 @@
+seed: 42
+test_size: 0.2
+repeats: 3
+output_dir: results/full
+
+models:
+  - xgboost
+  - lightgbm
+  - catboost
+  - ft_transformer
+  - tabpfn
+
+scenarios:
+  - standard
+  - low_data
+  - missingness
+  - covariate_shift
+
+low_data_fractions: [0.1, 0.25, 0.5]
+missingness_rates: [0.1, 0.3, 0.5]
+
+# IDs pin exact OpenML dataset versions for reproducibility.
+datasets:
+  - {name: credit-g, openml_id: 31, task: classification}
+  - {name: diabetes, openml_id: 37, task: classification}
+  - {name: spambase, openml_id: 44, task: classification}
+  - {name: banknote-authentication, openml_id: 1462, task: classification}
+  - {name: adult, openml_id: 1590, task: classification, max_samples: 15000}
+  - {name: kin8nm, openml_id: 189, task: regression}
+  - {name: cpu_act, openml_id: 197, task: regression}
+
+model_params:
+  xgboost: {n_estimators: 300, max_depth: 6, learning_rate: 0.05}
+  lightgbm: {n_estimators: 300, num_leaves: 31, learning_rate: 0.05}
+  catboost: {iterations: 300, depth: 6, learning_rate: 0.05}
+  ft_transformer:
+    {d_token: 32, n_heads: 4, n_layers: 2, epochs: 30, batch_size: 128}
+  tabpfn: {}
+
