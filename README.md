@@ -28,36 +28,54 @@ deployments—not only clean random train/test splits.
 The shift split deliberately uses features only—not the target—to avoid leaking
 outcomes into the scenario definition. Every dataset is pinned by OpenML data ID.
 
-## Quick start
+## Verified baseline results
 
-Python 3.10–3.13 is supported. A GPU is useful for TabPFN and FT-Transformer but
-is not required for the tree-only smoke benchmark.
+The table below is the output of the lightweight smoke benchmark using
+`HistGradientBoostingClassifier` on the pinned OpenML diabetes dataset (data ID
+37). It verifies the complete data-loading, perturbation, evaluation, and CSV
+reporting pipeline before running the more computationally expensive five-model
+study.
+
+| Scenario | Severity | Train rows | Accuracy | Macro-F1 | ROC-AUC | F1 degradation | Fit time (s) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Standard | — | 614 | 0.7468 | 0.7231 | 0.8207 | 0.0000 | 0.245 |
+| Low data | 25% training data | 153 | 0.7143 | 0.6707 | 0.8028 | 0.0524 | 0.075 |
+| Missingness | 30% MCAR | 614 | 0.7727 | 0.7395 | 0.7852 | -0.0164 | 0.245 |
+| Covariate shift | 20% shifted test set | 614 | 0.8701 | 0.6513 | 0.7965 | 0.0718 | 0.268 |
+
+These are single-seed pipeline-validation results, not final comparative
+evidence. In particular, a negative degradation means that macro-F1 happened to
+increase relative to the clean split in this run. The full benchmark uses three
+seeds, seven datasets, and all five model families. Timing varies by hardware.
+
+### Reproduce these results
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Lawliet-3/robust-tabular-learning.git
 cd robust-tabular-learning
 python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
-pip install -e '.[all,dev]'
-robust-tabular configs/benchmark.yaml
-```
-
-On Windows PowerShell, use `.venv\Scripts\Activate.ps1` instead of the `source`
-command. TabPFN's first run can download pretrained weights, so run the smoke
-configuration first and reserve the full benchmark for a longer session.
-
-For a fast pipeline check using only scikit-learn:
-
-```bash
+source .venv/bin/activate       # Windows: .venv\Scripts\Activate.ps1
 pip install -e '.[dev]'
 robust-tabular configs/smoke.yaml
 ```
 
-Outputs are written beneath the configured `output_dir`:
+The command creates:
 
-- `raw_results.csv`: one row per dataset/model/scenario/severity/repeat
-- `summary.csv`: means and standard deviations for numeric measures
-- `run_config.json`: exact configuration used for the run
+- `results/smoke/raw_results.csv`: every individual scenario run
+- `results/smoke/summary.csv`: aggregated metrics
+- `results/smoke/run_config.json`: the resolved configuration and seed
+
+To reproduce the complete research matrix instead, install the optional models
+and use the full configuration:
+
+```bash
+pip install -e '.[all,dev]'
+robust-tabular configs/benchmark.yaml
+```
+
+Python 3.10–3.13 is supported. A GPU is useful for TabPFN and FT-Transformer but
+is not required for the smoke benchmark. TabPFN may download pretrained weights
+on its first run, so reserve the full configuration for a longer session.
 
 Generate a short Markdown report after a completed run:
 
